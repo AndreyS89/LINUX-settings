@@ -1,55 +1,58 @@
+---@diagnostic disable: undefined-global
 ----------------------------------------------------------
--- БАЗОВЫЕ ФУНКЦИИ (UNDO, SWAP, BACKUP)
+-- 1. БАЗОВЫЕ НАСТРОЙКИ (OPTIONS)
+-- Здесь мы говорим Neovim, как себя вести: отступы, нумерация, буфер обмена.
 ----------------------------------------------------------
 
--- Директории для специальных файлов Vim
-local undodir    = vim.fn.stdpath('cache') .. '/undo'
-local backupdir  = vim.fn.stdpath('cache') .. '/backup'
-local swapdir    = vim.fn.stdpath('cache') .. '/swap'
+-- Определяем пути для хранения временных файлов (undo, backup),
+-- чтобы они не мусорили в папках проекта.
+local undodir = vim.fn.stdpath('cache') .. '/undo'
+local backupdir = vim.fn.stdpath('cache') .. '/backup'
+local swapdir = vim.fn.stdpath('cache') .. '/swap'
 
--- Если папки нет — создай
+-- Создаем эти папки, если их нет
 vim.fn.mkdir(undodir, "p")
 vim.fn.mkdir(backupdir, "p")
 vim.fn.mkdir(swapdir, "p")
 
--- Опции swap и backup
-vim.opt.swapfile = false            -- Отключить swap, если не нужен
-vim.opt.backup = true               -- Включить backup (на случай сбоя)
-vim.opt.backupdir = backupdir
-vim.opt.undofile = true             -- Включить сохранение истории undo
+-- Настройки сохранения
+vim.opt.swapfile = false -- Отключаем swap-файлы
+vim.opt.backup = false   -- Бэкапы тоже не нужны
+vim.opt.undofile = true  -- ВАЖНО: сохранять историю отмены (Undo) после перезагрузки
 vim.opt.undodir = undodir
--- vim.opt.swapfile = true           -- Если хочется swap, раскомментируйте
--- vim.opt.directory = swapdir
 
-----------------------------------------------------------
--- БАЗОВЫЕ НАСТРОЙКИ ИНТЕРФЕЙСА
-----------------------------------------------------------
----
+-- Внешний вид
+vim.opt.number = true         -- Показать номера строк
+vim.opt.relativenumber = true -- Относительные номера
+vim.opt.mouse = 'a'           -- Разрешить использование мышки
+vim.opt.termguicolors = true  -- Включить поддержку 16 млн цветов
+vim.opt.scrolloff = 8         -- Курсор не прилипает к краю экрана
 
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.mouse = 'a'
+-- Системный буфер обмена
 vim.opt.clipboard = 'unnamedplus'
-vim.opt.ignorecase = true
-vim.opt.smartcase = true
+
+-- Поиск
+vim.opt.ignorecase = true -- Игнорировать регистр при поиске
+vim.opt.smartcase = true  -- Если написана Большая буква, искать точно
 vim.opt.updatetime = 250
 vim.opt.timeoutlen = 300
+
+-- ГЛАВНАЯ КЛАВИША (Leader Key) - Пробел
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- Отступы
-vim.opt.tabstop = 2         -- ширина табуляции (2 пробела)
-vim.opt.shiftwidth = 2      -- ширина "отступа" для автоотступа (>> и <<)
-vim.opt.expandtab = true    -- всегда использовать пробелы вместо табов
-vim.opt.autoindent = true   -- включить автоматический отступ
-vim.opt.smartindent = true  -- умный отступ (для большинства языков)
+-- ОТСТУПЫ (Идеально для React/JS)
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.expandtab = true
+vim.opt.autoindent = true
+vim.opt.smartindent = true
 
 ----------------------------------------------------------
--- УСТАНОВКА МЕНЕДЖЕРА ПЛАГИНОВ (Lazy.nvim)
--- Позволяет удобно автоматически скачивать и обновлять плагины Neovim.
--- При первом запуске сам скачивает себя с GitHub, настройка занимает пару секунд.
+-- 2. МЕНЕДЖЕР ПЛАГИНОВ (LAZY.NVIM)
 ----------------------------------------------------------
 
+-- Проверяем и устанавливаем Lazy.nvim, если его нет
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -59,223 +62,208 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- СПИСОК ПЛАГИНОВ
 require("lazy").setup({
-  {
-    "williamboman/mason.nvim",
-    dependencies = { "williamboman/mason-lspconfig.nvim" }
-  },
-  ----------------------------------------------------------
-  -- ПЛАГИНЫ-ОДНОСТРОЧНИКИ (коротко и ясно)
-  ----------------------------------------------------------
-  -- Автоматическое определение отступов (tab/space)
-  'tpope/vim-sleuth',
-  -- Поддержка иконок для тем и файлового дерева
-  'nvim-tree/nvim-web-devicons',
-  -- Полезная библиотека для многих современных плагинов
-  'nvim-lua/plenary.nvim',
 
-  -- Настройка темы
+  -- [ТЕМА] Tokyo Night
   {
     'folke/tokyonight.nvim',
     lazy = false,
     priority = 1000,
-    opts = {},
+    config = function()
+      vim.cmd([[colorscheme tokyonight]])
+    end,
   },
 
-  ----------------------------------------------------------
-  -- GIT-ИНТЕГРАЦИЯ (lewis6991/gitsigns.nvim)
-  -- Показывает цветные полоски рядом со строками для визуального контроля изменений в git-репозитории.
-  ----------------------------------------------------------
-  {
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add          = { text = '+' },
-        change       = { text = '~' },
-        delete       = { text = '_' },
-        topdelete    = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
-  },
+  -- [БИБЛИОТЕКИ]
+  'nvim-tree/nvim-web-devicons',
+  'nvim-lua/plenary.nvim',
 
-  -- ДИСПЕТЧЕР ФАЙЛОВ (neo-tree.nvim)
-  ----------------------------------------------------------
+  -- [ФАЙЛОВЫЙ МЕНЕДЖЕР] Neo-tree
   {
     "nvim-neo-tree/neo-tree.nvim",
     branch = "v3.x",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons", -- уже установлен
-      "MunifTanjim/nui.nvim",
+    dependencies = { "MunifTanjim/nui.nvim" },
+    keys = {
+      { "<leader>e", ":Neotree toggle<CR>", desc = "Toggle Explorer" },
     },
   },
 
+  -- [ПОИСК] Telescope
+  {
+    'nvim-telescope/telescope.nvim',
+    tag = '0.1.6',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      local builtin = require('telescope.builtin')
+      vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Find Files' })
+      vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Find Text' })
+      vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Find Buffers' })
+    end
+  },
+
+  -- [ПОДСВЕТКА] Treesitter
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
+    config = function()
+      require("nvim-treesitter.configs").setup({
+        ensure_installed = { "lua", "vim", "javascript", "typescript", "tsx", "html", "css", "json", "markdown" },
+        highlight = { enable = true },
+        indent = { enable = true },
+      })
+    end,
   },
 
-  ----------------------------------------------------------
-  -- АВТОДОПОЛНЕНИЕ И LSP (nvim-cmp + плагины + lspconfig)
-  ----------------------------------------------------------
+  -- [АВТОМАТИЗАЦИЯ]
+  { 'windwp/nvim-ts-autotag', opts = {} },
+  { 'windwp/nvim-autopairs',  event = "InsertEnter", opts = {} },
+
+  -- [КОММЕНТАРИИ]
+  { 'numToStr/Comment.nvim',  opts = {},             lazy = false },
+
+  -- [GIT]
+  {
+    'lewis6991/gitsigns.nvim',
+    opts = {
+      on_attach = function(bufnr)
+        local gs = package.loaded.gitsigns
+        local function map(mode, l, r, opts)
+          opts = opts or {}
+          opts.buffer = bufnr
+          vim.keymap.set(mode, l, r, opts)
+        end
+        map('n', ']c', function() gs.next_hunk() end)
+        map('n', '[c', function() gs.prev_hunk() end)
+        map('n', '<leader>gp', gs.preview_hunk)
+        map('n', '<leader>gb', gs.blame_line)
+      end
+    },
+  },
+
+  -- [LSP, MASON, CMP] Настройка интеллекта
+  {
+    "williamboman/mason.nvim",
+    dependencies = {
+      "williamboman/mason-lspconfig.nvim",
+      "neovim/nvim-lspconfig",
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/nvim-cmp",
+      "L3MON4D3/LuaSnip",
+    },
+    config = function()
+      require("mason").setup()
+      require("mason-lspconfig").setup({
+        ensure_installed = { "ts_ls", "html", "cssls", "lua_ls", "eslint" },
+        handlers = {
+          function(server_name)
+            local capabilities = require('cmp_nvim_lsp').default_capabilities()
+            require("lspconfig")[server_name].setup({
+              capabilities = capabilities,
+              on_attach = function(client, bufnr)
+                local opts = { buffer = bufnr, noremap = true, silent = true }
+                vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+                vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+                vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+                vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+                vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+              end,
+            })
+          end,
+          ["lua_ls"] = function()
+            local capabilities = require('cmp_nvim_lsp').default_capabilities()
+            require("lspconfig").lua_ls.setup({
+              capabilities = capabilities,
+              settings = {
+                Lua = {
+                  diagnostics = { globals = { "vim" } }
+                }
+              }
+            })
+          end,
+        }
+      })
+    end
+  },
+
+  -- [ФОРМАТИРОВАНИЕ] Prettier
+  {
+    'stevearc/conform.nvim',
+    opts = {
+      formatters_by_ft = {
+        javascript = { "prettier" },
+        typescript = { "prettier" },
+        javascriptreact = { "prettier" },
+        typescriptreact = { "prettier" },
+        css = { "prettier" },
+        html = { "prettier" },
+        json = { "prettier" },
+        lua = { "stylua" },
+      },
+      format_on_save = { timeout_ms = 500, lsp_fallback = true },
+    },
+  },
+
+  -- [АВТОДОПОЛНЕНИЕ] CMP
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
-      "hrsh7th/cmp-buffer",
       "hrsh7th/cmp-path",
-      "hrsh7th/cmp-cmdline",
+      "hrsh7th/cmp-buffer",
       "L3MON4D3/LuaSnip",
-      "saadparwaiz1/cmp_luasnip"
+      "saadparwaiz1/cmp_luasnip",
+      "rafamadriz/friendly-snippets",
     },
-  },
-  {
-    "neovim/nvim-lspconfig"
+    config = function()
+      local cmp = require('cmp')
+      local luasnip = require('luasnip')
+      require("luasnip.loaders.from_vscode").lazy_load()
+
+      cmp.setup({
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
+        },
+        mapping = cmp.mapping.preset.insert({
+          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-f>'] = cmp.mapping.scroll_docs(4),
+          ['<C-Space>'] = cmp.mapping.complete(),
+          ['<CR>'] = cmp.mapping.confirm({ select = true }),
+          ['<Tab>'] = cmp.mapping.select_next_item(),
+        }),
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp' },
+          { name = 'luasnip' },
+          { name = 'path' },
+        }, {
+          { name = 'buffer' },
+        })
+      })
+    end
   },
 
-  ----------------------------------------------------------
--- СТАТУС-ЛИНИЯ (lualine.nvim)
-----------------------------------------------------------
+  -- [СТАТУС-СТРОКА]
   {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" }
+    opts = {
+      options = {
+        theme = 'tokyonight',
+        component_separators = '|',
+        section_separators = '',
+      },
+    }
   }
-
-  -- другие плагины для вставки
-
 })
 
-
 ----------------------------------------------------------
--- ГОРЯЧИЕ КЛАВИШИ
+-- 4. ОБЩИЕ ХОТКЕИ
 ----------------------------------------------------------
--- Открытие/закрытие дерева по <leader>e (чаше это \e или <Space>e)
-vim.keymap.set("n", "<leader>e", ":Neotree toggle<CR>", { desc = "Neo-tree toggle" })
-
--- Переключение буферов через Tab и Shift-Tab
 vim.keymap.set('n', '<Tab>', ':bnext<CR>', { desc = 'Next Buffer' })
 vim.keymap.set('n', '<S-Tab>', ':bprev<CR>', { desc = 'Prev Buffer' })
+vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', { silent = true })
+vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', { noremap = true })
 
-
-----------------------------------------------------------
--- НАСТРОЙКА ПЛАГИНОВ
-----------------------------------------------------------
-
--- ТЕМА
-vim.opt.termguicolors = true
-vim.cmd('colorscheme tokyonight')
-
--- Настройка nvim-treesitter - подсветка синтаксиса
-require("nvim-treesitter.configs").setup {
-  ensure_installed = {
-    "lua",
-    "vim",
-    "html",
-    "css",
-    "scss",
-    "javascript",
-    "typescript",
-    "tsx",
-    "json",
-    "yaml",
-    "markdown",
-    "markdown_inline",
-    "bash",
-    "dockerfile",
-    "gitignore",
-    "go",
-    "python"
-  },
-  highlight = { enable = true },
-  indent = { enable = true },
-}
-
--- НАСТРОЙКА lualine (статус-линиия)
-----------------------------------------------------------
-require('lualine').setup {
-  options = {
-    theme = 'auto',         -- автоматически выбрать тему, подстраиваясь под твою colorscheme
-    section_separators = '', -- убрать декоративные разделители, если не нравятся
-    component_separators = '',
-    icons_enabled = true,
-  }
-}
-
--- НАСТРОЙКА АВТОДОПОЛНЕНИЯ (nvim-cmp)
-----------------------------------------------------------
-local cmp = require'cmp'
-cmp.setup({
-  snippet = {
-    expand = function(args)
-      require('luasnip').lsp_expand(args.body)
-    end,
-  },
-  mapping = cmp.mapping.preset.insert({
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<CR>']      = cmp.mapping.confirm({ select = true }),
-    ['<Tab>']     = cmp.mapping.select_next_item(),
-    ['<S-Tab>']   = cmp.mapping.select_prev_item(),
-  }),
-  sources = cmp.config.sources({
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
-    { name = 'buffer' },
-    { name = 'path' }
-  })
-})
-
--- НАСТРОЙКА ЯЗЫКОВОГО СЕРВЕРА (nvim-lspconfig + mason)
-----------------------------------------------------------
-require("lspconfig").pyright.setup{}
-require("lspconfig").ts_ls.setup{}
-require("lspconfig").lua_ls.setup{}
-
-----------------------------------------------------------
--- НАСТРОЙКА GITSIGNS И HOTKEYS
-----------------------------------------------------------
-require('gitsigns').setup({
-  signs = {
-    add          = { text = '+' },
-    change       = { text = '~' },
-    delete       = { text = '-' },
-    topdelete    = { text = '-' },
-    changedelete = { text = '~' }
-  },
-  keymaps = {}, -- чтобы кастомные хоткеи не конфликтовали
-})
-
-----------------------------------------------------------
--- GIT HOTKEYS
-----------------------------------------------------------
-
--- Перейти к следующему hunk (изменению)
-vim.keymap.set('n', ']c', function()
-  require('gitsigns').next_hunk()
-end, { desc = "Git: Next hunk" })
-
--- Перейти к предыдущему hunk
-vim.keymap.set('n', '[c', function()
-  require('gitsigns').prev_hunk()
-end, { desc = "Git: Previous hunk" })
-
--- Просмотреть diff/preview текущего hunk
-vim.keymap.set('n', '<leader>gp', function()
-  require('gitsigns').preview_hunk()
-end, { desc = "Git: Preview hunk" })
-
--- Откатить изменения (reset hunk)
-vim.keymap.set('n', '<leader>gr', function()
-  require('gitsigns').reset_hunk()
-end, { desc = "Git: Reset hunk" })
-
--- Стадировать текущий hunk (add)
-vim.keymap.set('n', '<leader>gs', function()
-  require('gitsigns').stage_hunk()
-end, { desc = "Git: Stage hunk" })
-
--- Просмотреть изменения в строке под курсором
-vim.keymap.set('n', '<leader>gb', function()
-  require('gitsigns').blame_line()
-end, { desc = "Git: Blame line" })
-
+-- Удобный выход из скобок (имитация стрелки вправо в режиме Insert)
+vim.keymap.set('i', '<C-l>', '<Right>', { desc = "Move right in insert mode" })

@@ -31,4 +31,4 @@
 Скачай этот репозиторий в домашнюю папку:
 
 ```bash
-git clone [https://github.com/AndreyS89/LINUX-settings.git](https://github.com/AndreyS89/LINUX-settings.git) ~/dotfiles
+git clone https://github.com/AndreyS89/LINUX-settings.git ~/dotfiles

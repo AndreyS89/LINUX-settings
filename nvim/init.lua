@@ -160,7 +160,7 @@ require("lazy").setup({
             local capabilities = require('cmp_nvim_lsp').default_capabilities()
             require("lspconfig")[server_name].setup({
               capabilities = capabilities,
-              on_attach = function(client, bufnr)
+              on_attach = function(_, bufnr)
                 local opts = { buffer = bufnr, noremap = true, silent = true }
                 vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
                 vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
@@ -264,6 +264,14 @@ vim.keymap.set('n', '<Tab>', ':bnext<CR>', { desc = 'Next Buffer' })
 vim.keymap.set('n', '<S-Tab>', ':bprev<CR>', { desc = 'Prev Buffer' })
 vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', { silent = true })
 vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', { noremap = true })
+
+-- Перемещение строк в Normal Mode (Alt+j / Alt+k)
+vim.keymap.set("n", "<A-j>", ":m .+1<CR>==", { desc = "Move line down" })
+vim.keymap.set("n", "<A-k>", ":m .-2<CR>==", { desc = "Move line up" })
+
+-- Перемещение блоков в Visual Mode (выделил и двигаешь)
+vim.keymap.set("v", "<A-j>", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
+vim.keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 
 -- Удобный выход из скобок (имитация стрелки вправо в режиме Insert)
 vim.keymap.set('i', '<C-l>', '<Right>', { desc = "Move right in insert mode" })

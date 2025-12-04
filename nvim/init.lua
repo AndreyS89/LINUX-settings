@@ -86,7 +86,12 @@ require("lazy").setup({
   {
     "nvim-neo-tree/neo-tree.nvim",
     branch = "v3.x",
-    dependencies = { "MunifTanjim/nui.nvim" },
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+      "nvim-lua/plenary.nvim",
+      "nvim-tree/nvim-web-devicons",
+      "s1n7ax/nvim-window-picker", -- <--- ВОТ ЭТОГО НЕ ХВАТАЛО!
+    },
     keys = {
       { "<leader>e", ":Neotree toggle<CR>", desc = "Toggle Explorer" },
     },
@@ -124,6 +129,19 @@ require("lazy").setup({
 
   -- [КОММЕНТАРИИ]
   { 'numToStr/Comment.nvim',  opts = {},             lazy = false },
+
+  -- [ОБЕРТКА] Плагин Surround
+  -- Позволяет делать S" (обернуть), cs"' (поменять кавычки), ds" (удалить кавычки)
+  {
+    "kylechui/nvim-surround",
+    version = "*", -- Используем стабильную версию
+    event = "VeryLazy",
+    config = function()
+      require("nvim-surround").setup({
+        -- Здесь можно менять настройки, но стандартные отличные
+      })
+    end
+  },
 
   -- [GIT]
   {
@@ -291,5 +309,8 @@ vim.keymap.set("n", "<A-k>", ":m .-2<CR>==", { desc = "Move line up" })
 vim.keymap.set("v", "<A-j>", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
 vim.keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 
--- Удобный выход из скобок (имитация стрелки вправо в режиме Insert)
-vim.keymap.set('i', '<C-l>', '<Right>', { desc = "Move right in insert mode" })
+-- Удобная навигация в режиме вставки (Insert Mode)
+vim.keymap.set('i', '<C-h>', '<Left>', { desc = 'Move Left' })
+vim.keymap.set('i', '<C-j>', '<Down>', { desc = 'Move Down' })
+vim.keymap.set('i', '<C-k>', '<Up>', { desc = 'Move Up' })
+vim.keymap.set('i', '<C-l>', '<Right>', { desc = 'Move Right' })

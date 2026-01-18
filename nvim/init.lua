@@ -115,13 +115,20 @@ require("lazy").setup({
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = { "lua", "vim", "javascript", "typescript", "tsx", "html", "css", "json", "markdown" },
+      -- Безопасная загрузка: если плагин не найден, просто выходим
+      local status_ok, configs = pcall(require, "nvim-treesitter.configs")
+      if not status_ok then
+        return
+      end
+
+      configs.setup({
+        ensure_installed = { "lua", "vim", "javascript", "typescript", "html", "css", "json", "markdown" },
         highlight = { enable = true },
         indent = { enable = true },
       })
     end,
   },
+
 
   -- [АВТОМАТИЗАЦИЯ]
   { 'windwp/nvim-ts-autotag', opts = {} },

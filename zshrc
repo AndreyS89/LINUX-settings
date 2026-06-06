@@ -114,3 +114,4 @@ source $ZSH/oh-my-zsh.sh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 alias nvim="~/apps/nvim-linux-x86_64/bin/nvim"
+export PATH="$HOME/.local/bin:$PATH"
